@@ -7,7 +7,7 @@ const adminApiRedirectSchema = require('./admin-api/content-types/schema');
 const adminApiRedirectRoutes = require('./admin-api/routes/redirect');
 const adminApiRedirectController = require('./admin-api/controllers/redirect');
 const adminApiRedirectService = require('./admin-api/services/redirect');
-console.log(adminApiRedirectRoutes);
+
 // Content API
 const contentApiContentTypeRoutes = require('./content-api/routes/content-api');
 const contentApiContentTypeController = require('./content-api/controllers/content-type');
