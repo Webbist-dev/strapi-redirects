@@ -1,7 +1,5 @@
 /**
- *
  * PluginIcon
- *
  */
 
 import React from 'react';

@@ -94,7 +94,7 @@ const RedirectForm = (props) => {
             </S.SelectHelp>
 
             {isOpen && (
-              <S.InfoBox hasRadius padding={4} marginTop={4}>
+              <S.InfoBox hasRadius padding={4} marginTop={4} background={{ background: 'neutral100' }}>
                 {redirectTypeOptions.map((option) => (
                   <S.InfoItem key={option}>
                     {formatMessage(

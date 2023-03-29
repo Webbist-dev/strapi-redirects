@@ -27,7 +27,6 @@ const InfoBox = styled(Box)`
 			display: flex;
 			flex-direction: column;
 			gap: 16px;
-			background: ${theme.colors.neutral100};
 			border: 1px solid ${theme.colors.neutral200};
 		`}
 `;

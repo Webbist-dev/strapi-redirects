@@ -159,10 +159,14 @@ export const ImportModal = ({ onClose }) => {
         <ModalHeader>
           <Flex direction="column" alignItems="flex-start">
             <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
-              Import redirects
+              {formatMessage({
+                id: getTrad('modal.import.title')
+              })}
             </Typography>
             <Typography textColor="neutral800" as="p" id="copy">
-              If any of the redirects already exist, they will be updated.
+              {formatMessage({
+                id: getTrad('modal.import.description')
+              })}
             </Typography>
           </Flex>
         </ModalHeader>
@@ -170,11 +174,11 @@ export const ImportModal = ({ onClose }) => {
           {showFileDragAndDrop && (
             <Flex>
               <label className={labelClassNames} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
-                <span style={{ fontSize: 80 }}>
-                  <IconFile />
-                </span>
+                <IconFile />
                 <Typography style={{ fontSize: '1rem', fontWeight: 500 }} textColor="neutral600" as="p">
-                  Drag &amp; drop your file into this area or browse for a file to upload
+                  {formatMessage({
+                    id: getTrad('modal.import.dragAndDrop')
+                  })}
                 </Typography>
                 <input type="file" accept=".csv" hidden="" onChange={onReadFile} />
               </label>
@@ -183,7 +187,11 @@ export const ImportModal = ({ onClose }) => {
           {showLoader && (
             <>
               <Flex justifyContent="center">
-                <Loader>Importing data...</Loader>
+                <Loader>
+                  {formatMessage({
+                    id: getTrad('modal.import.loading')
+                  })}
+                </Loader>
               </Flex>
             </>
           )}
@@ -191,7 +199,9 @@ export const ImportModal = ({ onClose }) => {
             <>
               {showPartialSuccess && (
                 <Typography textColor="warning600" fontWeight="bold" as="h2">
-                  Import Partially Failed
+                  {formatMessage({
+                    id: getTrad('modal.import.partial.response')
+                  })}
                 </Typography>
               )}
               <Table colCount={tableHeaders.length} rowCount={redirects.length}>
@@ -240,7 +250,9 @@ export const ImportModal = ({ onClose }) => {
                 content={'Your data has been imported successfully.'}
                 action={
                   <Button onClick={onClose} variant="tertiary">
-                    Close
+                    {formatMessage({
+                      id: getTrad('modal.import.close')
+                    })}
                   </Button>
                 }
               />
@@ -249,7 +261,9 @@ export const ImportModal = ({ onClose }) => {
           {showNothingToImport && (
             <>
               <Typography textColor="neutral800" fontWeight="bold" as="h2">
-                Nothing to import
+                {formatMessage({
+                  id: getTrad('modal.import.close')
+                })}
               </Typography>
             </>
           )}
@@ -259,14 +273,20 @@ export const ImportModal = ({ onClose }) => {
             <>
               {showRemoveFileButton && (
                 <Button onClick={removeFile} variant="tertiary">
-                  Remove file
+                  {formatMessage({
+                    id: getTrad('modal.import.remove')
+                  })}
                 </Button>
               )}
             </>
           }
           endActions={
             <>
-              {showImportButton && <Button onClick={uploadData}>Import redirects</Button>}
+              {showImportButton && <Button onClick={uploadData}>
+                {formatMessage({
+                  id: getTrad('modal.import.remove')
+                })}
+              </Button>}
             </>
           }
         />

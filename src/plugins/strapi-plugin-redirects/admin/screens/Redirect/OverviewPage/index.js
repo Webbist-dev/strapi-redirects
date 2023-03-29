@@ -174,20 +174,51 @@ const RedirectOverviewPage = () => {
 
       <Flex paddingLeft={10} paddingRight={10} marginBottom={10} direction="column" alignItems="flex-start" gap={6}>
         <S.SelectHelp type="button" onClick={() => setIsOpen(!isOpen)}>
-          How does import work?
+          {formatMessage({
+            id: getTrad('overview.help.title')
+          })}
           <Icon width={3} height={3} as={isOpen ? ChevronUp : ChevronDown} />
         </S.SelectHelp>
         {isOpen && (
-          <S.InfoBox hasRadius padding={4} marginTop={4} background="neutral0">
+          <S.InfoBox hasRadius padding={4} marginTop={4} background="#fff">
             <S.InfoItem>
               <Typography textColor="neutral800" fontWeight="bold" as="h4" marginBottom={2}>
-                Upload a csv file, with the following columns:
+                {formatMessage({
+                  id: getTrad('overview.help.instructions')
+                })}
               </Typography>
 
               <ul>
-                <li><strong>from:</strong> the url to redirect from</li>
-                <li><strong>to:</strong> the url to redirect to</li>
-                <li><strong>type:</strong> the type of redirect (301 or permanent, 302 or temporary)</li>
+                <li>
+                  {formatMessage(
+                    {
+                      id: getTrad('overview.help.from')
+                    },
+                    {
+                      strong: (chunks) => <strong>{chunks}</strong>
+                    }
+                  )}
+                </li>
+                <li>
+                  {formatMessage(
+                    {
+                      id: getTrad('overview.help.to')
+                    },
+                    {
+                      strong: (chunks) => <strong>{chunks}</strong>
+                    }
+                  )}
+                </li>
+                <li>
+                  {formatMessage(
+                    {
+                      id: getTrad('overview.help.type')
+                    },
+                    {
+                      strong: (chunks) => <strong>{chunks}</strong>
+                    }
+                  )}
+                </li>
               </ul>
             </S.InfoItem>
           </S.InfoBox>

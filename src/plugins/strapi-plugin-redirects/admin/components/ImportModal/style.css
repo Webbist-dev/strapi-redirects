@@ -19,6 +19,11 @@
   cursor: pointer;
 }
 
+.plugin-redirect-import_modal_input-label svg {
+  width: 80px;
+  height: 80px;
+}
+
 .plugin-redirect-import_modal_input-label:hover {
   border-color: var(--hover-color);
 }
