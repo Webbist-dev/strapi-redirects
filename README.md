@@ -118,4 +118,4 @@ If you want to help out I have some things I'd love to implement with this plugi
  
 ## License
 
-This plugin is licensed under the Apache 2.0. See the LICENSE file for more information.
+This plugin is licensed under the MIT. See the LICENSE file for more information.
