@@ -262,7 +262,7 @@ export const ImportModal = ({ onClose }) => {
             <>
               <Typography textColor="neutral800" fontWeight="bold" as="h2">
                 {formatMessage({
-                  id: getTrad('modal.import.close')
+                  id: getTrad('modal.import.error.message')
                 })}
               </Typography>
             </>
@@ -284,7 +284,7 @@ export const ImportModal = ({ onClose }) => {
             <>
               {showImportButton && <Button onClick={uploadData}>
                 {formatMessage({
-                  id: getTrad('modal.import.remove')
+                  id: getTrad('modal.import.action')
                 })}
               </Button>}
             </>
