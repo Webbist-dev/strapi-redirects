@@ -24,17 +24,15 @@ module.exports = ({ env }) => ({
   // ...
   plugins: [
     // ...
-    {
-      id: 'redirects',
+    redirects : {
       enabled: true,
-      resolve: require('strapi-plugin-redirects'),
     },
   ],
   // ...
 });
 ```
 
-3. Restart your Strapi server and the plugin should be ready to use.
+3. Rebuild and restart your Strapi server and the plugin should be ready to use.
 
 ## Usage
 
