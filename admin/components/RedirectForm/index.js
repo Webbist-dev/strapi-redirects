@@ -145,7 +145,7 @@ const FormSchema = (formatMessage) => {
       .matches(relativeUrlRegEx, fm('general.form.errors.relativeUrl'))
       .required(fm('general.form.errors.required')),
     to: Yup.string()
-      .oneOf([Yup.string().matches(relativeUrlRegEx), Yup.string().matches(absoluteUrlRegex)],  fm('general.form.errors.url'))
+      .test('relativeOrAbsoluteUrl', fm('general.form.errors.url'), (value) => !!value && (relativeUrlRegEx.test(value) || absoluteUrlRegex.test(value)))
       .required(fm('general.form.errors.required'))
       .when(['from'], (from, schema) => schema.notOneOf([from], fm('general.form.errors.duplicate', { field: 'from' }))),
     type: Yup.string()
