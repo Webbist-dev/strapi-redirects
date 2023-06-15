@@ -136,16 +136,16 @@ const RedirectForm = (props) => {
 export { RedirectForm };
 
 const FormSchema = (formatMessage) => {
-  const toUrlRegex = /^(?!www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
-  const fromUrlRegex = /^(www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
+  const fromUrlRegex = /^(?!www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
+  const toUrlRegex = /^(www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
   const fm = (id, values) => formatMessage({ id: getTrad(id) }, values);
 
   return Yup.object().shape({
     from: Yup.string()
-      .matches(toUrlRegex, fm('general.form.errors.relativeUrl'))
+      .matches(fromUrlRegex, fm('general.form.errors.relativeUrl'))
       .required(fm('general.form.errors.required')),
     to: Yup.string()
-      .matches(fromUrlRegex, fm('general.form.errors.url'))
+      .matches(toUrlRegex, fm('general.form.errors.url'))
       .required(fm('general.form.errors.required'))
       .when(['from'], (from, schema) => schema.notOneOf([from], fm('general.form.errors.duplicate', { field: 'from' }))),
     type: Yup.string()
