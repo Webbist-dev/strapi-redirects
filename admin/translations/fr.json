@@ -1,6 +1,7 @@
 {
   "plugin.name": "Redirections",
-  "general.form.errors.url": "Le champs doit être une url relative.",
+  "general.form.errors.url": "Le champs doit être une url relative ou absolue.",
+  "general.form.errors.relativeUrl": "Le champs doit être une url relative.",
   "general.form.errors.required": "Ce champs est requis.",
   "general.form.errors.oneOf": "La valeur sélectionnée est invalide.",
   "general.form.errors.duplicate": "Le champs ne peut être le même que ''{field}''.",

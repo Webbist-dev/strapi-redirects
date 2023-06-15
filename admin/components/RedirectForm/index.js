@@ -1,13 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { useFormik } from 'formik';
-import { useIntl } from 'react-intl';
-import * as Yup from 'yup';
+import React, { useEffect, useState } from "react";
+import { useFormik } from "formik";
+import { useIntl } from "react-intl";
+import * as Yup from "yup";
 
-import { ChevronUp, ChevronDown } from '@strapi/icons';
-import { Icon, Flex, Grid, GridItem, Box, Select, Option, Button, TextInput } from '@strapi/design-system';
-import { redirectTypeOptions } from './types';
-import getTrad from '../../helpers/getTrad';
-import S from '../../helpers/styles';
+import { ChevronUp, ChevronDown } from "@strapi/icons";
+import {
+  Icon,
+  Flex,
+  Grid,
+  GridItem,
+  Box,
+  Select,
+  Option,
+  Button,
+  TextInput,
+} from "@strapi/design-system";
+import { redirectTypeOptions } from "./types";
+import getTrad from "../../helpers/getTrad";
+import S from "../../helpers/styles";
 
 const RedirectForm = (props) => {
   const { formatMessage } = useIntl();
@@ -19,15 +29,17 @@ const RedirectForm = (props) => {
     validateOnBlur: true,
     validateOnChange: true,
     initialValues: {
-      from: props.initialValues && props.initialValues.from || '',
-      to: props.initialValues && props.initialValues.to || '',
-      type: props.initialValues && props.initialValues.type || redirectTypeOptions[0],
+      from: (props.initialValues && props.initialValues.from) || "",
+      to: (props.initialValues && props.initialValues.to) || "",
+      type:
+        (props.initialValues && props.initialValues.type) ||
+        redirectTypeOptions[0],
     },
     validationSchema: FormSchema(formatMessage),
     onSubmit: (e) => {
       props.handleSubmit(e, submitMore);
       setSubmitMore(false);
-    }
+    },
   });
 
   useEffect(() => {
@@ -39,7 +51,7 @@ const RedirectForm = (props) => {
   const handleSelectChange = (e, fieldId) => {
     formik.handleChange(fieldId, e);
     formik.setFieldValue(fieldId, e);
-  }
+  };
 
   return (
     <form onSubmit={formik.handleSubmit}>
@@ -50,7 +62,7 @@ const RedirectForm = (props) => {
               id="from"
               name="from"
               value={formik.values.from}
-              label={formatMessage({ id: getTrad('detail.form.from.label') })}
+              label={formatMessage({ id: getTrad("detail.form.from.label") })}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={formik.errors.from}
@@ -61,7 +73,7 @@ const RedirectForm = (props) => {
               id="to"
               name="to"
               value={formik.values.to}
-              label={formatMessage({ id: getTrad('detail.form.to.label') })}
+              label={formatMessage({ id: getTrad("detail.form.to.label") })}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={formik.errors.to}
@@ -73,14 +85,16 @@ const RedirectForm = (props) => {
               id="type"
               name="type"
               value={formik.values.type}
-              label={formatMessage({ id: getTrad('detail.form.type.label') })}
-              onChange={(e) => handleSelectChange(e, 'type')}
+              label={formatMessage({ id: getTrad("detail.form.type.label") })}
+              onChange={(e) => handleSelectChange(e, "type")}
               onBlur={formik.handleBlur}
               error={formik.errors.type}
             >
               {redirectTypeOptions.map((option) => (
                 <Option key={option} value={option}>
-                  {formatMessage({ id: getTrad(`detail.form.type.value.${option}`) })}
+                  {formatMessage({
+                    id: getTrad(`detail.form.type.value.${option}`),
+                  })}
                 </Option>
               ))}
             </Select>
@@ -88,21 +102,32 @@ const RedirectForm = (props) => {
 
           <GridItem col={12}>
             <S.SelectHelp type="button" onClick={() => setIsOpen(!isOpen)}>
-              {formatMessage({ id: getTrad('detail.form.type.help') })}
+              {formatMessage({ id: getTrad("detail.form.type.help") })}
 
-              <Icon width={3} height={3} as={isOpen ? ChevronUp : ChevronDown} />
+              <Icon
+                width={3}
+                height={3}
+                as={isOpen ? ChevronUp : ChevronDown}
+              />
             </S.SelectHelp>
 
             {isOpen && (
-              <S.InfoBox hasRadius padding={4} marginTop={4} background={{ background: 'neutral100' }}>
+              <S.InfoBox
+                hasRadius
+                padding={4}
+                marginTop={4}
+                background={{ background: "neutral100" }}
+              >
                 {redirectTypeOptions.map((option) => (
                   <S.InfoItem key={option}>
                     {formatMessage(
                       {
-                        id: getTrad(`detail.form.type.value.${option}.description`)
+                        id: getTrad(
+                          `detail.form.type.value.${option}.description`
+                        ),
                       },
                       {
-                        strong: (chunks) => <strong>{chunks}</strong>
+                        strong: (chunks) => <strong>{chunks}</strong>,
                       }
                     )}
                   </S.InfoItem>
@@ -123,10 +148,12 @@ const RedirectForm = (props) => {
                 formik.submitForm();
               }}
             >
-              {formatMessage({ id: getTrad('detail.form.submit.new.title') })}
+              {formatMessage({ id: getTrad("detail.form.submit.new.title") })}
             </Button>
           )}
-          <Button type="submit">{formatMessage({ id: getTrad('detail.form.submit.title') })}</Button>
+          <Button type="submit">
+            {formatMessage({ id: getTrad("detail.form.submit.title") })}
+          </Button>
         </Flex>
       </Box>
     </form>
@@ -136,18 +163,25 @@ const RedirectForm = (props) => {
 export { RedirectForm };
 
 const FormSchema = (formatMessage) => {
-  const urlRegex = /^(?!www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
+  const toUrlRegex = /^(?!www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
+  const fromUrlRegex = /^(www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
   const fm = (id, values) => formatMessage({ id: getTrad(id) }, values);
 
   return Yup.object().shape({
     from: Yup.string()
-      .matches(urlRegex, fm('general.form.errors.url'))
-      .required(fm('general.form.errors.required')),
+      .matches(toUrlRegex, fm("general.form.errors.relativeUrl"))
+      .required(fm("general.form.errors.required")),
     to: Yup.string()
-      .matches(urlRegex, fm('general.form.errors.required'))
-      .when(['from'], (from, schema) => schema.notOneOf([from], fm('general.form.errors.duplicate', { field: 'from' }))),
+      .matches(fromUrlRegex, fm("general.form.errors.url"))
+      .required(fm("general.form.errors.required"))
+      .when(["from"], (from, schema) =>
+        schema.notOneOf(
+          [from],
+          fm("general.form.errors.duplicate", { field: "from" })
+        )
+      ),
     type: Yup.string()
-      .required(fm('general.form.errors.required'))
-      .oneOf(redirectTypeOptions, fm('general.form.errors.oneOf'))
+      .required(fm("general.form.errors.required"))
+      .oneOf(redirectTypeOptions, fm("general.form.errors.oneOf")),
   });
 };

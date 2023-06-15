@@ -1,6 +1,7 @@
 {
   "plugin.name": "Umleitungen",
-  "general.form.errors.url": "Feld sollte eine relative Url sein.",
+  "general.form.errors.url": "Feld sollte eine relative oder absolute Url sein.",
+  "general.form.errors.relativeUrl": "Feld sollte eine relative Url sein.",
   "general.form.errors.required": "Feld ist erforderlich.",
   "general.form.errors.oneOf": "Der gewählte Wert ist ungültig.",
   "general.form.errors.duplicate": "Feld ist nicht unbedingt dasselbe wie ''{field}''.",
