@@ -1,44 +1,44 @@
-import React, { useEffect, useState } from 'react'
-import { useFormik } from 'formik'
-import { useIntl } from 'react-intl'
-import * as Yup from 'yup'
+import React, { useEffect, useState } from 'react';
+import { useFormik } from 'formik';
+import { useIntl } from 'react-intl';
+import * as Yup from 'yup';
 
-import { ChevronUp, ChevronDown } from '@strapi/icons'
-import { Icon, Flex, Grid, GridItem, Box, Select, Option, Button, TextInput } from '@strapi/design-system'
-import { redirectTypeOptions } from './types'
-import getTrad from '../../helpers/getTrad'
-import S from '../../helpers/styles'
+import { ChevronUp, ChevronDown } from '@strapi/icons';
+import { Icon, Flex, Grid, GridItem, Box, Select, Option, Button, TextInput } from '@strapi/design-system';
+import { redirectTypeOptions } from './types';
+import getTrad from '../../helpers/getTrad';
+import S from '../../helpers/styles';
 
 const RedirectForm = (props) => {
-  const { formatMessage } = useIntl()
-  const [isOpen, setIsOpen] = useState(false)
-  const [submitMore, setSubmitMore] = useState(false)
+  const { formatMessage } = useIntl();
+  const [isOpen, setIsOpen] = useState(false);
+  const [submitMore, setSubmitMore] = useState(false);
 
   const formik = useFormik({
     enableReinitialize: true,
     validateOnBlur: true,
     validateOnChange: true,
     initialValues: {
-      from: (props.initialValues && props.initialValues.from) || '',
-      to: (props.initialValues && props.initialValues.to) || '',
-      type: (props.initialValues && props.initialValues.type) || redirectTypeOptions[0]
+      from: props.initialValues && props.initialValues.from || '',
+      to: props.initialValues && props.initialValues.to || '',
+      type: props.initialValues && props.initialValues.type || redirectTypeOptions[0],
     },
     validationSchema: FormSchema(formatMessage),
     onSubmit: (e) => {
-      props.handleSubmit(e, submitMore)
-      setSubmitMore(false)
+      props.handleSubmit(e, submitMore);
+      setSubmitMore(false);
     }
-  })
+  });
 
   useEffect(() => {
     if ((props.resetCount || 0) > 0) {
-      formik.resetForm()
+      formik.resetForm();
     }
-  }, [props.resetCount])
+  }, [props.resetCount]);
 
   const handleSelectChange = (e, fieldId) => {
-    formik.handleChange(fieldId, e)
-    formik.setFieldValue(fieldId, e)
+    formik.handleChange(fieldId, e);
+    formik.setFieldValue(fieldId, e);
   }
 
   return (
@@ -80,9 +80,7 @@ const RedirectForm = (props) => {
             >
               {redirectTypeOptions.map((option) => (
                 <Option key={option} value={option}>
-                  {formatMessage({
-                    id: getTrad(`detail.form.type.value.${option}`)
-                  })}
+                  {formatMessage({ id: getTrad(`detail.form.type.value.${option}`) })}
                 </Option>
               ))}
             </Select>
@@ -121,8 +119,8 @@ const RedirectForm = (props) => {
             <Button
               variant="secondary"
               onClick={() => {
-                setSubmitMore(true)
-                formik.submitForm()
+                setSubmitMore(true);
+                formik.submitForm();
               }}
             >
               {formatMessage({ id: getTrad('detail.form.submit.new.title') })}
@@ -132,15 +130,15 @@ const RedirectForm = (props) => {
         </Flex>
       </Box>
     </form>
-  )
-}
+  );
+};
 
-export { RedirectForm }
+export { RedirectForm };
 
 const FormSchema = (formatMessage) => {
-  const toUrlRegex = /^(?!www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/
-  const fromUrlRegex = /^(www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/
-  const fm = (id, values) => formatMessage({ id: getTrad(id) }, values)
+  const toUrlRegex = /^(?!www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
+  const fromUrlRegex = /^(www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
+  const fm = (id, values) => formatMessage({ id: getTrad(id) }, values);
 
   return Yup.object().shape({
     from: Yup.string()
@@ -149,11 +147,9 @@ const FormSchema = (formatMessage) => {
     to: Yup.string()
       .matches(fromUrlRegex, fm('general.form.errors.url'))
       .required(fm('general.form.errors.required'))
-      .when(['from'], (from, schema) =>
-        schema.notOneOf([from], fm('general.form.errors.duplicate', { field: 'from' }))
-      ),
+      .when(['from'], (from, schema) => schema.notOneOf([from], fm('general.form.errors.duplicate', { field: 'from' }))),
     type: Yup.string()
       .required(fm('general.form.errors.required'))
       .oneOf(redirectTypeOptions, fm('general.form.errors.oneOf'))
-  })
-}
+  });
+};
