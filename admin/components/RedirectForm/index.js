@@ -136,15 +136,17 @@ const RedirectForm = (props) => {
 export { RedirectForm };
 
 const FormSchema = (formatMessage) => {
-  const urlRegex = /^(?!www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
+  const relativeUrlRegEx = /^(?!www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
+  const absoluteUrlRegex = /^(www\.|(?:https?|ftp):\/\/|[A-Za-z]:\\|\/\/).+$/;
   const fm = (id, values) => formatMessage({ id: getTrad(id) }, values);
 
   return Yup.object().shape({
     from: Yup.string()
-      .matches(urlRegex, fm('general.form.errors.url'))
+      .matches(relativeUrlRegEx, fm('general.form.errors.relativeUrl'))
       .required(fm('general.form.errors.required')),
     to: Yup.string()
-      .matches(urlRegex, fm('general.form.errors.required'))
+      .test('relativeOrAbsoluteUrl', fm('general.form.errors.url'), (value) => !!value && (relativeUrlRegEx.test(value) || absoluteUrlRegex.test(value)))
+      .required(fm('general.form.errors.required'))
       .when(['from'], (from, schema) => schema.notOneOf([from], fm('general.form.errors.duplicate', { field: 'from' }))),
     type: Yup.string()
       .required(fm('general.form.errors.required'))
