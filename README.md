@@ -55,7 +55,7 @@ module.exports = ({ env }) => ({
 
 2. You can use relative or absolute paths depending on your use case for the api for "from" and "to"
 
-3. You should use either 301/302 or permanent/temporary for parsing to work and map to the correct type in the enumerable field
+3. You should use either permanent/temporary for parsing to work and map to the correct type in the enumerable field
 
 ## Frontend
 
