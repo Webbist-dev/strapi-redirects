@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = {
+module.exports = ({ strapi }) => ({
   find: async () => {
     const result = await strapi.plugins['content-manager'].services['content-types'].findAllContentTypes();
 
@@ -25,4 +25,4 @@ module.exports = {
 
     return result;
   }
-};
+});

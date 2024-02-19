@@ -1,7 +1,7 @@
 import { prefixPluginTranslations } from '@strapi/helper-plugin';
 import pluginPkg from '../package.json';
 import pluginId from './helpers/pluginId';
-import PluginIcon from './components/PluginIcon';
+import { Repeat } from '@strapi/icons';
 
 const pluginDescription = pluginPkg.strapi.description || pluginPkg.description;
 const { name } = pluginPkg.strapi;
@@ -16,9 +16,32 @@ export default {
       name,
     });
 
+    // app.createSettingSection(
+    //   {
+    //     id: pluginId,
+    //     intlLabel: {
+    //       id: pluginPkg,
+    //       defaultMessage: `${pluginPkg.strapi.displayName} plugin`
+    //     }
+    //   },
+    //   [
+    //     {
+    //       intlLabel: {
+    //         id: pluginPkg,
+    //         defaultMessage: 'Settings'
+    //       },
+    //       id: 'redirects-settings',
+    //       to: `/settings/${pluginId}`,
+    //       Component: async () => {
+    //         return await import(/* webpackChunkName: "redirects-settings" */ './screens/Settings');
+    //       }
+    //     }
+    //   ]
+    // );
+
     app.addMenuLink({
       to: `/plugins/${pluginId}`,
-      icon: PluginIcon,
+      icon: Repeat,
       intlLabel: {
         id: pluginPkg,
         defaultMessage: pluginPkg.strapi.displayName

@@ -1,19 +1,25 @@
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { useIntl } from 'react-intl';
-import { request, useNotification } from '@strapi/helper-plugin';
-
-import { EmptyStateLayout } from '@strapi/design-system';
-
-import { Flex, Icon, Button, Loader, Portal, Table, Tbody, Tr, Td, Typography } from '@strapi/design-system';
-import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system/ModalLayout';
-
-import CheckCircle from '@strapi/icons/CheckCircle';
-import IconFile from '@strapi/icons/File';
-
+import { useFetchClient, useNotification } from '@strapi/helper-plugin';
+import {
+  EmptyStateLayout,
+  Flex,
+  Icon,
+  Button,
+  Loader,
+  Portal,
+  Table,
+  Tbody,
+  Tr,
+  Td,
+  Typography,
+  ModalLayout,
+  ModalBody,
+  ModalHeader,
+  ModalFooter
+} from '@strapi/design-system';
+import { CheckCircle, File } from '@strapi/icons';
 import { TableHead } from '../TableHead';
-
-import { getImportTableHeaders } from '../../helpers/getTableHeaders';
 import parseCSV from '../../helpers/parser'
 import getTrad from '../../helpers/getTrad';
 import S from '../../helpers/styles';
@@ -27,268 +33,276 @@ const ModalState = {
 };
 
 export const ImportModal = ({ onClose }) => {
-  const history = useHistory();
+  const { post } = useFetchClient();
   const { formatMessage } = useIntl();
   const toggleNotification = useNotification();
 
   const [redirects, setRedirects] = useState([]);
-  const [uploadSuccessful, setUploadSuccessful] = useState(ModalState.UNSET);
+  const [uploadState, setUploadState] = useState(ModalState.UNSET);
   const [uploadingData, setUploadingData] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [sortBy, setSortBy] = useState('type');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [labelClassNames, setLabelClassNames] = useState('plugin-redirect-import_modal_input-label');
 
-  const tableHeaders = getImportTableHeaders(formatMessage);
+  const tableHeaders = [
+    {
+      name: 'from',
+      label: formatMessage({ id: getTrad('overview.table.headers.from') }),
+    },
+    {
+      name: 'to',
+      label: formatMessage({ id: getTrad('overview.table.headers.to') }),
+    },
+    {
+      name: 'type',
+      label: formatMessage({ id: getTrad('overview.table.headers.type') }),
+    },
+    {
+      name: 'status',
+      label: formatMessage({ id: getTrad('overview.table.headers.status') }),
+    },
+  ];
 
-  const onReadFile = (e) => {
-    const file = e.target.files[0];
-    readFile(file);
+  const readFileAsync = (file) => new Promise((resolve, reject) => {
+    if (file.type !== 'text/csv') {
+      reject(new Error(`File type ${file.type} not supported.`));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = (e) => reject(e.target.error);
+    reader.readAsText(file);
+  });
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files ? e.target.files[0] : e.dataTransfer.files[0];
+    try {
+      const content = await readFileAsync(file);
+      const data = await parseCSV(content);
+      setRedirects(data);
+    } catch (error) {
+      toggleNotification({
+        type: 'warning',
+        message: error.toString(),
+      });
+    }
   };
 
-  const readFile = (file) => {
-    if (file.type !== 'text/csv') {
-      throw new Error(`File type ${file.type} not supported.`);
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      const data = await parseCSV(e.target.result);
+  const uploadData = async () => {
+    setUploadingData(true);
+    try {
+      const { data } = await post('/redirects/import', { body: { data: redirects } });
       setRedirects(data);
-    };
 
-    reader.readAsText(file);
+      // Check if all items are CREATED
+      const allCreated = data.every(item => item.status === 'CREATED');
+      const notificationType = allCreated ? 'success' : 'warning';
+      const notificationMessageId = allCreated ? 'modal.import.success.message' : 'modal.import.partial.message';
+
+      setUploadState(allCreated ? ModalState.SUCCESS : ModalState.PARTIAL);
+      toggleNotification({
+        type: notificationType,
+        message: formatMessage({ id: getTrad(notificationMessageId) })
+      });
+    } catch (err) {
+      setUploadState(ModalState.NOTHING);
+      toggleNotification({
+        type: 'warning',
+        message: formatMessage({ id: getTrad('modal.import.error.message') })
+      });
+    } finally {
+      setUploadingData(false);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    handleFileChange(e);
+  };
+
+  const handleSort = (newSortBy) => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
   };
 
   const removeFile = () => {
     setRedirects([]);
   };
 
-  const uploadData = async () => {
-    setUploadingData(true);
-    try {
-      const response = await request('/redirects/import', {
-        method: 'POST',
-        body: { data: redirects },
-      });
-
-      setRedirects(response);
-
-      if (response.length && response.length === redirects.length) {
-        setUploadSuccessful(ModalState.SUCCESS);
-        toggleNotification({
-          type: 'success',
-          message:
-            formatMessage({
-              id: getTrad('modal.import.success.message')
-            })
-        });
-        refreshView();
-      } else if (response.length && response.length !== redirects.length) {
-        setUploadSuccessful(ModalState.UNSET);
-        toggleNotification({
-          type: 'warning',
-          message:
-            formatMessage({
-              id: getTrad('modal.import.partial.message')
-            })
-        });
-      } else {
-        setUploadSuccessful(ModalState.NOTHING);
-        toggleNotification({
-          type: 'warning',
-          message:
-            formatMessage({
-              id: getTrad('modal.import.error.message')
-            })
-        });
-      }
-
-    } catch (err) {
-      console.log(err)
-    } finally {
-      setUploadingData(false);
-    }
+  const importContinue = () => {
+    onClose();
   };
 
-  const refreshView = () => {
-    history.push('/tmp');
-    history.goBack();
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDragEnter = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setLabelClassNames([labelClassNames, 'plugin-redirect-import_modal_input-label--dragged-over'].join(' '));
-  };
-
-  const handleDragLeave = () => {
-    setLabelClassNames(labelClassNames.replaceAll('plugin-redirect-import_modal_input-label--dragged-over', ''));
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const file = e.dataTransfer.files[0];
-    readFile(file);
-  };
-
-  const handleSort = (sortBy) => {
-    setSortBy(sortBy);
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-  };
-
+  // Adjusted conditions for rendering content
   const showLoader = uploadingData;
-  const showFileDragAndDrop = !uploadingData && uploadSuccessful === ModalState.UNSET && redirects.length === 0;
-  const showData = !uploadingData && uploadSuccessful === ModalState.UNSET && redirects.length > 0;
-  const showSuccess = !uploadingData && uploadSuccessful === ModalState.SUCCESS;
-  const showPartialSuccess = !uploadingData && uploadSuccessful === ModalState.PARTIAL;
-  const showNothingToImport = !uploadingData && uploadSuccessful === ModalState.NOTHING;
+  const showFileDragAndDrop = !uploadingData && uploadState === ModalState.UNSET && redirects.length === 0;
 
-  const showImportButton = showData;
-  const showRemoveFileButton = showData;
+  // Show the table of redirects in both UNSET and PARTIAL states if there's data
+  const showData = !uploadingData && (uploadState === ModalState.UNSET || uploadState === ModalState.PARTIAL) && redirects.length > 0;
+
+  const showSuccess = !uploadingData && uploadState === ModalState.SUCCESS;
+  const showNothingToImport = !uploadingData && uploadState === ModalState.NOTHING;
+
+  // Buttons visibility
+  const showPartialSuccess = !uploadingData && showData && uploadState === ModalState.UNSET;
+  const showContinueButton = !uploadingData && showData && uploadState === ModalState.PARTIAL;
 
   return (
     <Portal>
       <ModalLayout onClose={onClose} labelledBy="title">
         <ModalHeader>
           <Flex direction="column" alignItems="flex-start">
-            <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
-              {formatMessage({
-                id: getTrad('modal.import.title')
-              })}
-            </Typography>
-            <Typography textColor="neutral800" as="p" id="copy">
-              {formatMessage({
-                id: getTrad('modal.import.description')
-              })}
-            </Typography>
+            {showContinueButton ? (
+              <>
+                <Typography fontWeight="bold" textColor="neutral800" as="h2">
+                  {formatMessage({ id: getTrad('modal.import.partial.title') })}
+                </Typography>
+                <Typography textColor="neutral800" as="p">
+                  {formatMessage({ id: getTrad('modal.import.partial.description') })}
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
+                  {formatMessage({ id: getTrad('modal.import.title') })}
+                </Typography>
+                {!showSuccess && (
+                  <Typography textColor="neutral800" as="p" id="copy">
+                    {formatMessage({ id: getTrad('modal.import.description') })}
+                  </Typography>
+                )}
+              </>
+            )}
           </Flex>
         </ModalHeader>
         <ModalBody className="plugin-redirect-import_modal_body">
           {showFileDragAndDrop && (
             <Flex>
-              <label className={labelClassNames} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
-                <IconFile />
+              <label
+                htmlFor="file-upload"
+                className={`plugin-redirect-import_modal_input-label plugin-redirect-custom_file_upload ${isDragOver ? 'plugin-redirect-import_modal_input-label--dragged-over' : ''}`}
+                onDragEnter={handleDragOver}
+                onDragOver={handleDragOver} // Prevent the default behavior to allow drop
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop} // Handle the file drop
+              >
+                <File />
                 <Typography style={{ fontSize: '1rem', fontWeight: 500 }} textColor="neutral600" as="p">
-                  {formatMessage({
-                    id: getTrad('modal.import.dragAndDrop')
-                  })}
+                  {formatMessage({ id: getTrad('modal.import.dragAndDrop') })}
                 </Typography>
-                <input type="file" accept=".csv" hidden="" onChange={onReadFile} />
+                <input id="file-upload" type="file" accept=".csv" onChange={handleFileChange} style={{ display: 'none' }} />
               </label>
             </Flex>
           )}
+
           {showLoader && (
-            <>
-              <Flex justifyContent="center">
-                <Loader>
-                  {formatMessage({
-                    id: getTrad('modal.import.loading')
-                  })}
-                </Loader>
-              </Flex>
-            </>
+            <Flex justifyContent="center">
+              <Loader>
+                {formatMessage({ id: getTrad('modal.import.loading') })}
+              </Loader>
+            </Flex>
           )}
+
           {showData && (
-            <>
-              {showPartialSuccess && (
-                <Typography textColor="warning600" fontWeight="bold" as="h2">
-                  {formatMessage({
-                    id: getTrad('modal.import.partial.response')
-                  })}
-                </Typography>
-              )}
-              <Table colCount={tableHeaders.length} rowCount={redirects.length}>
-                <TableHead headers={tableHeaders} handleSort={handleSort} sortBy={sortBy} sortOrder={sortOrder} />
-                <Tbody>
-                  {redirects.map((entry) =>
-                    <Tr key={entry.id}>
-                      <Td>
-                        <S.ModalInfo type={entry.details.type} ellipsis style={{ maxWidth: '160px' }}>
-                          {entry.from}
-                        </S.ModalInfo>
-                      </Td>
-                      <Td>
-                        <S.ModalInfo type={entry.details.type} ellipsis style={{ maxWidth: '160px' }}>
-                          {entry.to}
-                        </S.ModalInfo>
-                      </Td>
+            <Table
+              colCount={tableHeaders.length}
+              rowCount={redirects.length}
+            >
+              <TableHead
+                headers={tableHeaders}
+                handleSort={handleSort}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+              />
+              <Tbody>
+                {redirects.map((entry, index) =>
+                  <Tr key={index}>
+                    <Td>
+                      <S.ModalInfo type={entry.details.type} ellipsis style={{ maxWidth: '160px' }}>
+                        {entry.from}
+                      </S.ModalInfo>
+                    </Td>
+                    <Td>
+                      <S.ModalInfo type={entry.details.type} ellipsis style={{ maxWidth: '160px' }}>
+                        {entry.to}
+                      </S.ModalInfo>
+                    </Td>
+                    <Td>
+                      <S.ModalInfo type={entry.details.type}>
+                        {entry.type}
+                      </S.ModalInfo>
+                    </Td>
+                    {entry.details.type !== 'NEW' ? (
                       <Td>
                         <S.ModalInfo type={entry.details.type}>
-                          {entry.type}
+                          {entry.details.type}
                         </S.ModalInfo>
                       </Td>
-                      {entry.message ? (
-                        <Td>
-                          <S.ModalInfo type={entry.details.type}>
-                            {entry.message}
-                          </S.ModalInfo>
-                        </Td>
-                      ) : (
-                        <Td>
-                          <S.ModalInfo type={entry.details.type}>
-                            -
-                          </S.ModalInfo>
-                        </Td>
-                      )}
-                    </Tr>
-                  )}
-                </Tbody>
-              </Table>
-            </>
+                    ) : (
+                      <Td>
+                        <S.ModalInfo type={entry.details.type}>
+                          -
+                        </S.ModalInfo>
+                      </Td>
+                    )}
+                  </Tr>
+                )}
+              </Tbody>
+            </Table>
           )}
+
           {showSuccess && (
-            <>
-              <EmptyStateLayout
-                icon={<Icon width="6rem" height="6rem" color="success500" as={CheckCircle} />}
-                content={'Your data has been imported successfully.'}
-                action={
-                  <Button onClick={onClose} variant="tertiary">
-                    {formatMessage({
-                      id: getTrad('modal.import.close')
-                    })}
-                  </Button>
-                }
-              />
-            </>
+            <EmptyStateLayout
+              icon={<Icon width="6rem" height="6rem" color="success500" as={CheckCircle} />}
+              content={'Your data has been imported successfully.'}
+              action={
+                <Button onClick={onClose} variant="tertiary">
+                  {formatMessage({ id: getTrad('modal.import.close') })}
+                </Button>
+              }
+            />
           )}
+
           {showNothingToImport && (
-            <>
-              <Typography textColor="neutral800" fontWeight="bold" as="h2">
-                {formatMessage({
-                  id: getTrad('modal.import.error.message')
-                })}
-              </Typography>
-            </>
+            <Typography textColor="neutral800" fontWeight="bold" as="h2">
+              {formatMessage({ id: getTrad('modal.import.error.message') })}
+            </Typography>
           )}
         </ModalBody>
         <ModalFooter
-          startActions={
+          startActions={showPartialSuccess && (
+            <Button onClick={removeFile} variant="tertiary">
+              {formatMessage({ id: getTrad('modal.import.remove') })}
+            </Button>
+          )}
+          endActions={(
             <>
-              {showRemoveFileButton && (
-                <Button onClick={removeFile} variant="tertiary">
-                  {formatMessage({
-                    id: getTrad('modal.import.remove')
-                  })}
+              {showPartialSuccess && (
+                <Button onClick={uploadData}>
+                  {formatMessage({ id: getTrad('modal.import.action') })}
+                </Button>
+              )}
+              {showContinueButton && (
+                <Button onClick={importContinue}>
+                  {formatMessage({ id: getTrad('modal.import.continue') })}
                 </Button>
               )}
             </>
-          }
-          endActions={
-            <>
-              {showImportButton && <Button onClick={uploadData}>
-                {formatMessage({
-                  id: getTrad('modal.import.action')
-                })}
-              </Button>}
-            </>
-          }
+          )}
         />
       </ModalLayout>
     </Portal >

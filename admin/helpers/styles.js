@@ -59,7 +59,11 @@ ${(props) => {
 			return css`
 				color: ${props.theme.colors.success600};
       `;
-		} else if (props.type === 'LOOP') {
+		} else if (props.type === 'LOOP_DETECTED') {
+			return css`
+				color: ${props.theme.colors.warning600};
+      `;
+		} else if (props.type === 'DUPLICATE') {
 			return css`
 				color: ${props.theme.colors.danger600};
       `;

@@ -1,6 +1,6 @@
 'use strict';
 
-const { getPluginService } = require('../../util/getPluginService');
+const { getPluginService } = require('../helpers/getPluginService');
 
 module.exports = () => ({
   find: async (ctx) => {

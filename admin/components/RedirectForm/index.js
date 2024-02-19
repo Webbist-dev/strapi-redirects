@@ -1,31 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import { useIntl } from 'react-intl';
 import * as Yup from 'yup';
 
 import { ChevronUp, ChevronDown } from '@strapi/icons';
-import { Icon, Flex, Grid, GridItem, Box, Select, Option, Button, TextInput } from '@strapi/design-system';
+import { Icon, Flex, Grid, GridItem, Box, Button, TextInput, SingleSelect, SingleSelectOption } from '@strapi/design-system';
+import { useNotification } from '@strapi/helper-plugin';
 import { redirectTypeOptions } from './types';
 import getTrad from '../../helpers/getTrad';
 import S from '../../helpers/styles';
 
 const RedirectForm = (props) => {
   const { formatMessage } = useIntl();
+  const toggleNotification = useNotification();
   const [isOpen, setIsOpen] = useState(false);
   const [submitMore, setSubmitMore] = useState(false);
+
+  const initialValues = useMemo(() => ({
+    from: props.initialValues?.from || '',
+    to: props.initialValues?.to || '',
+    type: props.initialValues?.type || redirectTypeOptions[0],
+  }), [props.initialValues]);
 
   const formik = useFormik({
     enableReinitialize: true,
     validateOnBlur: true,
     validateOnChange: true,
-    initialValues: {
-      from: props.initialValues && props.initialValues.from || '',
-      to: props.initialValues && props.initialValues.to || '',
-      type: props.initialValues && props.initialValues.type || redirectTypeOptions[0],
-    },
+    initialValues,
     validationSchema: FormSchema(formatMessage),
-    onSubmit: (e) => {
-      props.handleSubmit(e, submitMore);
+    onSubmit: (values) => {
+      if (!formik.dirty) {
+        toggleNotification({
+          type: 'warning',
+          message: formatMessage({ id: getTrad('detail.form.save.notify.error.update.message') })
+        });
+        return;
+      }
+      props.handleSubmit(values, submitMore);
       setSubmitMore(false);
     }
   });
@@ -69,7 +80,7 @@ const RedirectForm = (props) => {
           </GridItem>
 
           <GridItem col={6}>
-            <Select
+            <SingleSelect
               id="type"
               name="type"
               value={formik.values.type}
@@ -79,11 +90,11 @@ const RedirectForm = (props) => {
               error={formik.errors.type}
             >
               {redirectTypeOptions.map((option) => (
-                <Option key={option} value={option}>
+                <SingleSelectOption key={option} value={option}>
                   {formatMessage({ id: getTrad(`detail.form.type.value.${option}`) })}
-                </Option>
+                </SingleSelectOption>
               ))}
-            </Select>
+            </SingleSelect>
           </GridItem>
 
           <GridItem col={12}>
@@ -98,12 +109,8 @@ const RedirectForm = (props) => {
                 {redirectTypeOptions.map((option) => (
                   <S.InfoItem key={option}>
                     {formatMessage(
-                      {
-                        id: getTrad(`detail.form.type.value.${option}.description`)
-                      },
-                      {
-                        strong: (chunks) => <strong>{chunks}</strong>
-                      }
+                      { id: getTrad(`detail.form.type.value.${option}.description`) },
+                      { strong: (chunks) => <strong>{chunks}</strong> }
                     )}
                   </S.InfoItem>
                 ))}

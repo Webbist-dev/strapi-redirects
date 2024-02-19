@@ -1,9 +1,9 @@
 import React, { memo, useEffect, useState } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import { useIntl } from 'react-intl';
-import { request, useNotification } from '@strapi/helper-plugin';
+import { useFetchClient, useNotification } from '@strapi/helper-plugin';
 import { ArrowLeft as ArrowLeftIcon } from '@strapi/icons';
-import { Link, Box, BaseHeaderLayout, ContentLayout } from '@strapi/design-system';
+import { Loader, Link, Box, BaseHeaderLayout, ContentLayout } from '@strapi/design-system';
 
 import pluginId from '../../../helpers/pluginId';
 import getTrad from '../../../helpers/getTrad';
@@ -11,8 +11,10 @@ import getTrad from '../../../helpers/getTrad';
 import { RedirectForm } from '../../../components/RedirectForm';
 
 const RedirectDetailPage = () => {
+  const { get, post, put } = useFetchClient();
   const { formatMessage } = useIntl();
   const { id: selectedRedirectId } = useParams();
+  const [isLoading, setIsLoading] = useState(true);
   const history = useHistory();
   const toggleNotification = useNotification();
   const [redirect, setRedirect] = useState(undefined);
@@ -28,27 +30,26 @@ const RedirectDetailPage = () => {
 
   const getRedirect = async () => {
     try {
-      const result = await request(`/${pluginId}/${selectedRedirectId}`);
+      setIsLoading(true);
+      const { data } = await get(`/${pluginId}/${selectedRedirectId}`);
 
-      if (!result || !result.data || !result.data.id) {
-        throw new Error('No redirect found');
-      }
-
-      setRedirect({ id: result.data.id, ...result.data.attributes });
+      setRedirect(data);
     } catch (error) {
       console.error(error);
       setRedirect(undefined);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (values, submitMore) => {
+  const handleSubmit = async (formData, submitMore) => {
     try {
-      if (!values || !values.from) {
-        throw new Error('No values');
+      if (!formData || !formData.from) {
+        throw new Error('No form values');
       }
 
       if (isNewRedirect) {
-        const redirect = await createRedirect(values);
+        const redirect = await createRedirect(formData);
 
         if (redirect || redirect.id) {
           if (submitMore) {
@@ -58,70 +59,68 @@ const RedirectDetailPage = () => {
           }
         }
       } else {
-        await updateRedirect(values);
+        await updateRedirect(formData);
 
         if (submitMore && redirect) {
           history.push(`/plugins/${pluginId}/new`);
         }
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.error && error.response.data.error.details) {
+        const errorType = error.response.data.error.details.type;
+        toggleNotification({
+          type: 'warning',
+          message: formatMessage({
+            id: getTrad(`detail.form.save.notify.error.${errorType}.message`)
+          })
+        });
+      } else {
+        toggleNotification({
+          type: 'warning',
+          message: formatMessage({
+            id: getTrad('detail.form.save.notify.error.general.message')
+          })
+        });
+      }
     }
   };
 
   const createRedirect = async (redirect) => {
-    try {
-      const result = await request(`/${pluginId}`, {
-        method: 'POST',
-        body: {
-          data: redirect
-        }
-      });
+    const result = await post(`/${pluginId}`, { body: { data: redirect } });
 
-      toggleNotification({
-        type: 'success',
-        message: formatMessage({
-          id: getTrad('detail.form.save.notify.success.new.message')
-        })
-      });
-
-      return { id: result.data.id, ...result.data.attributes };
-    } catch (error) {
-      const strError = JSON.stringify(error);
-      const parsedError = JSON.parse(strError);
-
+    if (!result.data) {
       toggleNotification({
         type: 'warning',
         message: formatMessage({
-          id: getTrad(`detail.form.save.notify.error.${getSaveRedirectErrorMessage(parsedError)}.message`)
+          id: getTrad(`detail.form.save.notify.error.${result.error.details.type}.message`)
         })
       });
     }
+
+    toggleNotification({
+      type: 'success',
+      message: formatMessage({
+        id: getTrad('detail.form.save.notify.success.new.message')
+      })
+    });
+
+    return { id: result.data.id, ...result.data.attributes };
   };
 
   const updateRedirect = async (redirect) => {
-    try {
-      await request(`/${pluginId}/${selectedRedirectId}`, {
-        method: 'PUT',
-        body: {
-          id: selectedRedirectId,
-          data: redirect
-        }
-      });
-      toggleNotification({
-        type: 'success',
-        message: formatMessage({
-          id: getTrad('detail.form.save.notify.success.message')
-        })
-      });
-    } catch (error) {
-      toggleNotification({
-        type: 'warning',
-        message: formatMessage({
-          id: getTrad(`detail.form.save.notify.error.${getSaveRedirectErrorMessage(error)}.message`)
-        })
-      });
-    }
+    await put(`/${pluginId}/${selectedRedirectId}`, {
+      body: {
+        id: selectedRedirectId,
+        data: redirect
+      }
+    });
+
+    toggleNotification({
+      type: 'success',
+      message: formatMessage({
+        id: getTrad('detail.form.save.notify.success.message')
+      })
+    });
   };
 
   return (
@@ -139,7 +138,8 @@ const RedirectDetailPage = () => {
       />
       <ContentLayout>
         <Box>
-          {(redirect || isNewRedirect) && (
+          {isLoading && !isNewRedirect && <Loader />}
+          {(!isLoading || isNewRedirect) && (
             <RedirectForm
               initialValues={redirect}
               handleSubmit={handleSubmit}
@@ -154,14 +154,3 @@ const RedirectDetailPage = () => {
 };
 
 export default memo(RedirectDetailPage);
-const getSaveRedirectErrorMessage = (error) => {
-  const strError = JSON.stringify(error);
-
-  if (!error || !strError) {
-    return undefined;
-  }
-
-  const parsedError = JSON.parse(strError);
-
-  return parsedError && parsedError.response && parsedError.response.payload && parsedError.response.payload.error && parsedError.response.payload.error.details && parsedError.response.payload.error.details.type ? parsedError.response.payload.error.details.type : 'general';
-}

@@ -3,18 +3,29 @@ import React, { useEffect, useState, memo } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
-import { request, EmptyBodyTable, PaginationURLQuery, PageSizeURLQuery } from '@strapi/helper-plugin';
-import { Box, Table, Tbody, Tr, Td, Typography, Button, Flex, Icon, IconButton, BaseHeaderLayout, Searchbar } from '@strapi/design-system';
+import { useFetchClient, EmptyBodyTable, PaginationURLQuery, PageSizeURLQuery } from '@strapi/helper-plugin';
+import {
+  Box,
+  Table,
+  Tbody,
+  Tr,
+  Td,
+  Typography,
+  Button,
+  Flex,
+  Icon,
+  IconButton,
+  BaseHeaderLayout,
+  Searchbar
+} from '@strapi/design-system';
 import { ChevronUp, ChevronDown, Plus, Pencil, Trash } from '@strapi/icons';
 
 import { TableHead } from '../../../components/TableHead';
 import { InjectedImportButton } from '../../../components/InjectedImportButton';
 
-import { usePrevious } from '../../../helpers/hooks/usePrevious';
-import { useDebounce } from '../../../helpers/hooks/useDebounce';
-import { useSearchQuery } from '../../../helpers/hooks/useSearchQuery';
-
-import { getOverviewTableHeaders } from '../../../helpers/getTableHeaders';
+import { usePrevious } from '../../../hooks/usePrevious';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { useSearchQuery } from '../../../hooks/useSearchQuery';
 
 import S from '../../../helpers/styles';
 
@@ -22,6 +33,7 @@ import pluginId from '../../../helpers/pluginId';
 import getTrad from '../../../helpers/getTrad';
 
 const RedirectOverviewPage = () => {
+  const { get, del } = useFetchClient();
   const history = useHistory();
   const { pageSize, page, setNewPage } = useSearchQuery();
   const { formatMessage } = useIntl();
@@ -34,7 +46,24 @@ const RedirectOverviewPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const debouncedSearchValue = useDebounce(searchValue, 300);
   const prevDebouncedSearchValue = usePrevious(debouncedSearchValue);
-  const tableHeaders = getOverviewTableHeaders(formatMessage);
+  const tableHeaders = [
+    {
+      name: 'id',
+      label: formatMessage({ id: getTrad('overview.table.headers.id') }),
+    },
+    {
+      name: 'from',
+      label: formatMessage({ id: getTrad('overview.table.headers.from') }),
+    },
+    {
+      name: 'to',
+      label: formatMessage({ id: getTrad('overview.table.headers.to') }),
+    },
+    {
+      name: 'type',
+      label: formatMessage({ id: getTrad('overview.table.headers.type') }),
+    }
+  ];
   const pageCount = Math.ceil(totalNumberOfRedirects / pageSize);
 
   const handleRowClick = (id) => {
@@ -54,16 +83,8 @@ const RedirectOverviewPage = () => {
           },
           filters: {
             $or: [
-              {
-                from: {
-                  $contains: searchValue
-                }
-              },
-              {
-                to: {
-                  $contains: searchValue
-                }
-              }
+              { from: { $contains: searchValue } },
+              { to: { $contains: searchValue } }
             ]
           }
         },
@@ -72,22 +93,22 @@ const RedirectOverviewPage = () => {
         }
       );
 
-      const result = await request(`/${pluginId}?${query}`);
+      const { data } = await get(`/${pluginId}?${query}`);
 
-      setRedirects(
-        result.data.map((redirect) => ({
-          id: redirect.id,
-          ...redirect.attributes
-        }))
-      );
-
-      setTotalNumberOfRedirects(result.meta.pagination.total);
+      setRedirects(data.redirects);
+      setTotalNumberOfRedirects(data.total);
       setIsLoading(false);
     } catch (error) {
       setRedirects([]);
       setTotalNumberOfRedirects(0);
       setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const refreshRedirects = () => {
+    getRedirects(page);
   };
 
   useEffect(() => {
@@ -107,7 +128,7 @@ const RedirectOverviewPage = () => {
 
   const handleDeleteRedirect = async (id) => {
     try {
-      await request(`/${pluginId}/${id}`, { method: 'DELETE' });
+      await del(`/${pluginId}/${id}`);
       await getRedirects(1);
     } catch (error) {
       setRedirects([]);
@@ -131,18 +152,12 @@ const RedirectOverviewPage = () => {
         p={0}
         primaryAction={
           <Button startIcon={<Plus />} onClick={handleNewRedirect}>
-            {formatMessage({
-              id: getTrad('overview.header.addButton.title')
-            })}
+            {formatMessage({ id: getTrad('overview.header.addButton.title') })}
           </Button>
         }
-        title={formatMessage({
-          id: getTrad('overview.header.title')
-        })}
+        title={formatMessage({ id: getTrad('overview.header.title') })}
         subtitle={formatMessage(
-          {
-            id: getTrad('overview.header.subtitle')
-          },
+          { id: getTrad('overview.header.subtitle') },
           { amount: totalNumberOfRedirects }
         )}
         as="h2"
@@ -154,69 +169,54 @@ const RedirectOverviewPage = () => {
             name="_q"
             value={searchValue}
             onChange={handleSearch}
-            placeholder={formatMessage({
-              id: getTrad('overview.search.placeholder')
-            })}
+            placeholder={formatMessage({ id: getTrad('overview.search.placeholder') })}
             onClear={() => setSearchValue('')}
-            clearLabel={formatMessage({
-              id: getTrad('overview.search.clearLabel')
-            })}
+            clearLabel={formatMessage({ id: getTrad('overview.search.clearLabel') })}
             size="S"
           >
-            {formatMessage({
-              id: getTrad('overview.search.label')
-            })}
+            {formatMessage({ id: getTrad('overview.search.label') })}
           </Searchbar>
 
-          <InjectedImportButton />
+          <InjectedImportButton onImportClose={refreshRedirects} />
         </Flex>
       </Flex>
 
-      <Flex paddingLeft={10} paddingRight={10} marginBottom={10} direction="column" alignItems="flex-start" gap={6}>
+      <Flex
+        paddingLeft={10}
+        paddingRight={10}
+        marginBottom={10}
+        direction="column"
+        alignItems="flex-start"
+        gap={6}
+      >
         <S.SelectHelp type="button" onClick={() => setIsOpen(!isOpen)}>
-          {formatMessage({
-            id: getTrad('overview.help.title')
-          })}
+          {formatMessage({ id: getTrad('overview.help.title') })}
           <Icon width={3} height={3} as={isOpen ? ChevronUp : ChevronDown} />
         </S.SelectHelp>
         {isOpen && (
           <S.InfoBox hasRadius padding={4} marginTop={4} background="#fff">
             <S.InfoItem>
               <Typography textColor="neutral800" fontWeight="bold" as="h4" marginBottom={2}>
-                {formatMessage({
-                  id: getTrad('overview.help.instructions')
-                })}
+                {formatMessage({ id: getTrad('overview.help.instructions') })}
               </Typography>
 
               <ul>
                 <li>
                   {formatMessage(
-                    {
-                      id: getTrad('overview.help.from')
-                    },
-                    {
-                      strong: (chunks) => <strong>{chunks}</strong>
-                    }
+                    { id: getTrad('overview.help.from') },
+                    { strong: (chunks) => <strong>{chunks}</strong> }
                   )}
                 </li>
                 <li>
                   {formatMessage(
-                    {
-                      id: getTrad('overview.help.to')
-                    },
-                    {
-                      strong: (chunks) => <strong>{chunks}</strong>
-                    }
+                    { id: getTrad('overview.help.to') },
+                    { strong: (chunks) => <strong>{chunks}</strong> }
                   )}
                 </li>
                 <li>
                   {formatMessage(
-                    {
-                      id: getTrad('overview.help.type')
-                    },
-                    {
-                      strong: (chunks) => <strong>{chunks}</strong>
-                    }
+                    { id: getTrad('overview.help.type') },
+                    { strong: (chunks) => <strong>{chunks}</strong> }
                   )}
                 </li>
               </ul>
@@ -225,9 +225,23 @@ const RedirectOverviewPage = () => {
         )}
       </Flex>
 
-      <Flex paddingLeft={10} paddingRight={10} direction="column" alignItems="stretch" gap={6}>
-        <Table colCount={tableHeaders.length} rowCount={pageSize}>
-          <TableHead headers={tableHeaders} handleSort={handleSort} sortBy={sortBy} sortOrder={sortOrder} />
+      <Flex
+        paddingLeft={10}
+        paddingRight={10}
+        direction="column"
+        alignItems="stretch"
+        gap={6}
+      >
+        <Table
+          colCount={tableHeaders.length}
+          rowCount={pageSize}
+        >
+          <TableHead
+            headers={tableHeaders}
+            handleSort={handleSort}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+          />
           {redirects.length > 0 ? (
             <Tbody>
               {redirects.map((entry) => (
@@ -256,17 +270,13 @@ const RedirectOverviewPage = () => {
                     <Flex justifyContent="end">
                       <IconButton
                         onClick={() => handleRowClick(entry.id)}
-                        label={formatMessage({
-                          id: getTrad('overview.table.actions.edit.label')
-                        })}
+                        label={formatMessage({ id: getTrad('overview.table.actions.edit.label') })}
                         noBorder
                         icon={<Pencil />}
                       />
                       <IconButton
                         onClick={() => handleDeleteRedirect(entry.id)}
-                        label={formatMessage({
-                          id: getTrad('overview.table.actions.delete.label')
-                        })}
+                        label={formatMessage({ id: getTrad('overview.table.actions.delete.label') })}
                         noBorder
                         icon={<Trash />}
                       />

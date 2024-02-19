@@ -1,119 +1,112 @@
-# Strapi plugin redirects
+# Strapi Plugin for Managing Redirects
 
-This plugin allows a user to manage redirects from the admin panel.
+This plugin provides a convenient way to manage URL redirects within a dedicated collection type in Strapi, catering to the headless nature of the CMS. While it does not automatically handle redirects on the server side, it offers a structured endpoint from which frontend applications can fetch redirect rules and implement redirection logic as needed. This approach empowers developers and content managers to seamlessly integrate and manage redirect rules, enhancing SEO and user experience by leveraging the flexibility of Strapi's headless architecture.
 
-Once the plugin is enabled, you should see a new option (Redirects) under plugins in the admin dashboard. 
+![Version](https://img.shields.io/badge/version-0.0.6-blue.svg?cacheSeconds=2592000)
+[![Documentation](https://img.shields.io/badge/documentation-yes-brightgreen.svg)](https://github.com/Webbist-dev/strapi-redirects/#readme)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Webbist-dev/strapi-redirects/graphs/commit-activity)
+[![License: MIT](https://img.shields.io/github/license/Webbist-dev/strapi-redirects)](https://github.com/Webbist-dev/strapi-redirects/blob/master/LICENSE)
+[![Twitter: webbist](https://img.shields.io/twitter/follow/webbist.svg?style=social)](https://twitter.com/webbist)
 
-Inside this plugin you can add redirects, each redirect requires the following fields [to, from, type].
+## Features
 
-The `To` field represents the destination URL where the user should be redirected to. The `From` field represents the original URL that the user attempted to access. The `Type` field represents the type of redirect to be used (e.g. 301 or 302).
+- **Admin Panel Integration:** Once installed, the plugin adds a new section called "Redirects" under the plugins category in the Strapi admin dashboard. This intuitive interface lets you effortlessly manage your redirects.
+- **Flexible Redirects Management:** Create redirects by specifying the origin URL (`From`), the destination URL (`To`), and the redirect type (`Type`).
+- **Accessible Endpoint:** Redirects are made available through the `api/redirects` endpoint as a JSON object. This endpoint is accessible to authenticated users with the appropriate permissions, enabling easy integration with your frontend.
 
-Once a redirect is added, it will be output on the endpoint `api/redirects` as a JSON object. This endpoint can be accessed by authenticated users with the appropriate permissions.
+## Getting Started
 
-## Installation
+### Installation
 
-1. Install the plugin via npm:
+1. Install the plugin using npm or yarn:
 
 ```npm install strapi-plugin-redirects``` or ```yarn add strapi-plugin-redirects```
 
-2. Enable the plugin in your Strapi project by adding the following line to `./config/plugins.js`:
-
+2. Enable the plugin in Strapi by adding it to your ./config/plugins.js:
 
 ```
 module.exports = ({ env }) => ({
-  // ...
-  plugins: [
-    // ...
-    redirects : {
-      enabled: true,
-    },
-  ],
-  // ...
+  // Other plugin configurations...
+  redirects: {
+    enabled: true,
+  },
 });
 ```
 
-3. Rebuild and restart your Strapi server and the plugin should be ready to use.
+3. Restart your Strapi server for the changes to take effect.
 
-## Usage
+## How to Use
 
-1. Log in to your Strapi admin panel and navigate to the `Redirects` option under plugins.
+1. Access the Strapi admin panel and locate the `Redirects` section within the plugins area.
+2. To add a new redirect, click on `Add New Redirect` and fill in the `To`, `From`, and `Type` fields accordingly.
+3. After saving, the new redirect will be available at the `api/redirects` endpoint.
+4. To fetch redirects, send a GET request to `api/redirects`. The response will be a JSON object listing all configured redirects.
 
-2. Click on the `Add New Redirect` button to add a new redirect.
+### Importing Redirects
 
-3. Fill in the required fields (To, From, and Type) for the redirect.
+You can import redirects in bulk by uploading a CSV file with `from`, `to`, and `type` headers. Both relative and absolute paths are supported for maximum flexibility, and specifying `permanent` or `temporary` in the `type` field correctly maps to the respective redirect type.
 
-4. Save the redirect and it should be output on the endpoint `api/redirects`.
+## Example Usage with Next.js
 
-5. To view the redirects, make a GET request to the `api/redirects` endpoint. The response should be a JSON object containing all of the redirects.
+This plugin is ideal for content editors or SEO specialists managing redirects in a headless CMS setup. Here's how you can integrate it with a Next.js project:
 
-## Importing
+1. Fetch redirects during the build process to include them in `next.config.js`.
 
-1. Upload a csv file with the headers: 
-  - from
-  - to
-  - type
+Example script for fetching redirects:
 
-2. You can use relative or absolute paths depending on your use case for the api for "from" and "to"
-
-3. You should use either permanent/temporary for parsing to work and map to the correct type in the enumerable field
-
-## Frontend
-
-Since Strapi is headless this plugin is simply a way for content editors or SEOers to manage redirects to be consumed by the frontend. An example implementation of useage of the redirects in next.js is:
-
-1. Request the endpoint as part of the build process to be included in next.config.js
-
-The redirects request and mapping file could look something like this:
-
-```
+```javascript
 const fetch = require('isomorphic-unfetch');
 
-// Bake redirects into next config at build time
 const redirects = () => {
   const apiUrl = process.env.NEXT_STRAPI_API_URL || 'http://localhost:1337/api';
 
   return fetch(`${apiUrl}/redirects?pagination[start]=0&pagination[limit]=-1`)
-    .then((res) => res.json())
-    .then((response) => {
-      const redirects = response.data.map((redirect) => ({
-        source: redirect.attributes.from,
-        destination: redirect.attributes.to,
-        permanent: redirect.attributes.type === 'permanent',
+    .then(res => res.json())
+    .then(response => {
+      return response.data.map(redirect => ({
+        source: redirect.from,
+        destination: redirect.to,
+        permanent: redirect.type === 'moved_permanently_301',
       }));
-
-      return redirects;
-    })
+    });
 };
 
 module.exports = redirects;
 ```
 
-And using it in the next.config.js would work like this. 
+Incorporate the fetched redirects into next.config.js:
 
-```
-const redirects = require('./redirects');
+
+```javascript
+const getRedirects = require('./redirects');
 
 module.exports = {
-  ...
-  redirects: () => {
-    return redirects();
-  }
+  // Other configurations...
+  redirects: () => getRedirects(),
 };
 ```
 
+## Redirect Types
+
+Define your redirect types with clear descriptions, for instance:
+
+- 301 Moved Permanent: The resource has moved permanently to a new URL.
+- 302 Temporary: The resource is temporarily located at a different URL.
+- 307 Found: Temporarily moved to a new URL with the same method used.
+- 410 Gone: The resource is permanently removed and won't be available again.
+- 451 Unavailable For Legal Reasons: Access to the resource is restricted due to legal reasons.
+
 ## Contributions
 
-Inspired by [@webbio](https://www.npmjs.com/package/@webbio/strapi-plugin-redirects) plugin which works very similarly but is not on the marketplace or on a public repository for some reason (I added import functionality, would have done a pull request if it was public!)
+This plugin is inspired by and extends the functionalities of the [@webbio](https://www.npmjs.com/package/@webbio/strapi-plugin-redirects) plugin by adding features like bulk import capabilities. Contributions in the form of translations, feature enhancements, and bug fixes are highly encouraged and appreciated.
 
-- French Translation [ChristopheCVB](https://github.com/ChristopheCVB)
-- German Translation [meowhib](https://github.com/meowhib)
+We are particularly interested in expanding the plugin to include:
 
-If you want to help out I have some things I'd love to implement with this plugin.
+1. A settings page to enable redirects on specific content types, allowing users to easily manage redirects when content items are deleted or slugs are changed.
+2. Integration with hosting providers like Vercel, Netlify, Firebase, Amplify, and Render.io to automate the management of redirects through CRUD events.
 
-1. Read from existing content types and have a settings page to "enable" redirects on specific content types so the user can select a collection or single type and be prompted with a modal to add a redirect if a content item is deleted or a UID like a slug is renamed. 
+Feel free to reach out or submit pull requests on GitHub if you're interested in contributing to the development of this plugin.
 
-2. Add provider support for Vercel/Netlify/Firebase/Ampliphy/Render.io so redirects are uploaded automatically on CRUD events to be handled by the host (I know render.io only allows GET requests for it's redirects dashboard)
- 
 ## License
 
-This plugin is licensed under the MIT. See the LICENSE file for more information.
+This plugin is available under the MIT License. For more information, please refer to the LICENSE file in the repository.

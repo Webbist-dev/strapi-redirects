@@ -8,7 +8,7 @@ import { ImportModal } from '../ImportModal';
 
 import getTrad from '../../helpers/getTrad';
 
-export const InjectedImportButton = () => {
+export const InjectedImportButton = ({ onImportClose }) => {
   const { formatMessage } = useIntl();
   const [importVisible, setImportVisible] = useState(false);
 
@@ -18,6 +18,7 @@ export const InjectedImportButton = () => {
 
   const closeImportModal = () => {
     setImportVisible(false);
+    onImportClose(); 
   };
 
   return (
