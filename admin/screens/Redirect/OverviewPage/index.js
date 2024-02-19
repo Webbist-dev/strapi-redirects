@@ -146,6 +146,8 @@ const RedirectOverviewPage = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
+  const subtitleMessageId = totalNumberOfRedirects === 1 ? 'overview.header.subtitle.singular' : 'overview.header.subtitle.plural';
+
   return (
     <Box>
       <BaseHeaderLayout
@@ -157,7 +159,7 @@ const RedirectOverviewPage = () => {
         }
         title={formatMessage({ id: getTrad('overview.header.title') })}
         subtitle={formatMessage(
-          { id: getTrad('overview.header.subtitle') },
+          { id: getTrad(subtitleMessageId) },
           { amount: totalNumberOfRedirects }
         )}
         as="h2"

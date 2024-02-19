@@ -7,7 +7,7 @@ module.exports = () => ({
     ctx.body = await getPluginService('redirects').findOne(ctx.params.id);
   },
   findAll: async (ctx) => {
-    ctx.body = await getPluginService('redirects').findAll();
+    ctx.body = await getPluginService('redirects').findAll(ctx.query);
   },
   create: async (ctx) => {
     ctx.body = await getPluginService('redirects').create(ctx.request.body);

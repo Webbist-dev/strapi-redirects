@@ -7,6 +7,8 @@
   "general.form.errors.duplicate": "Feld ist nicht unbedingt dasselbe wie ''{field}''.",
   "overview.header.title": "Umleitungen",
   "overview.header.subtitle": "{amount} Umleitungen gefunden",
+  "overview.header.subtitle.singular": "{amount} Weiterleitung gefunden",
+  "overview.header.subtitle.plural": "{amount} Weiterleitungen gefunden",
   "overview.header.addButton.title": "Neue Umleitung hinzufügen",
   "overview.header.importButton.title": "Importieren",
   "overview.search.label": "Suche",

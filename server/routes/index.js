@@ -6,7 +6,9 @@ const redirects = require('./redirects');
 module.exports = {
   'content-api': {
     type: 'content-api',
-    routes: contentType
+    routes: [
+      ...contentType
+    ]
   },
   'admin': {
     type: 'admin',

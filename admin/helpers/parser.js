@@ -59,7 +59,6 @@ const parseAndValidateCSV = async (data) => {
 
       return { ...redirect, status: 'VALID', details: { type: 'NEW' } };
     });
-    console.log('parsing results', validationResults);
     return validationResults;
   } catch (error) {
     console.error('Failed to parse CSV:', error);

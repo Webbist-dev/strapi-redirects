@@ -55,19 +55,11 @@ This plugin is ideal for content editors or SEO specialists managing redirects i
 Example script for fetching redirects:
 
 ```javascript
-const fetch = require('isomorphic-unfetch');
-
 const redirects = () => {
-  const apiUrl = process.env.NEXT_STRAPI_API_URL || 'http://localhost:1337/api';
-
-  return fetch(`${apiUrl}/redirects?pagination[start]=0&pagination[limit]=-1`)
+  return fetch('http://localhost:1337/redirects')
     .then(res => res.json())
     .then(response => {
-      return response.data.map(redirect => ({
-        source: redirect.from,
-        destination: redirect.to,
-        permanent: redirect.type === 'moved_permanently_301',
-      }));
+      // Use redirects however you need to
     });
 };
 
@@ -90,11 +82,11 @@ module.exports = {
 
 Define your redirect types with clear descriptions, for instance:
 
-- 301 Moved Permanent: The resource has moved permanently to a new URL.
-- 302 Temporary: The resource is temporarily located at a different URL.
-- 307 Found: Temporarily moved to a new URL with the same method used.
-- 410 Gone: The resource is permanently removed and won't be available again.
-- 451 Unavailable For Legal Reasons: Access to the resource is restricted due to legal reasons.
+- moved_permanently_301: The resource has moved permanently to a new URL.
+- found_302: The resource is temporarily located at a different URL.
+- temporary_redirect_307: Temporarily moved to a new URL with the same method used.
+- gone_410: The resource is permanently removed and won't be available again.
+- unavailable_for_legal_reasons_451: Access to the resource is restricted due to legal reasons.
 
 ## Contributions
 

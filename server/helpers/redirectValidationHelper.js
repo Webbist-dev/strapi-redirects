@@ -59,7 +59,6 @@ async function validateRedirect(redirect, isUpdate = false) {
   }
 
   const hasLoop = await isUrlLooping(from, to, id);
-  console.log('hasLoop', hasLoop);
   const isValid = !hasDuplicate && !hasLoop;
 
   const errors = compileErrors(hasDuplicate, hasLoop);

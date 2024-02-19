@@ -7,7 +7,7 @@ const config = require('./config');
 const controllers = require('./controllers');
 const routes = require('./routes');
 const services = require('./services');
-const schema = require('./schema.json');
+const schema = require('./content-types/redirect');
 
 module.exports = {
   register,

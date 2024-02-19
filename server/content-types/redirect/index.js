@@ -1,4 +1,4 @@
-{
+module.exports = {
   "kind": "collectionType",
   "collectionName": "redirects",
   "info": {

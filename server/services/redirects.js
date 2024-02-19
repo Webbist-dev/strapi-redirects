@@ -21,15 +21,35 @@ module.exports = ({ strapi }) => ({
    * 
    * @returns 
    */
-  findAll: async () => {
-    const results = await strapi.entityService.findMany('plugin::redirects.redirect', {
-      fields: ['id', 'from', 'to', 'type'],
-      limit: NOLIMIT
+  findAll: async (params = {}) => {
+    // Destructure and set default values for sort, filters, and handle pagination using start and limit
+    const {
+      sort = 'id:desc', // Default sorting order
+      filters = {},
+      pagination = {}
+    } = params;
+  
+    // Calculate start (offset) based on page and pageSize (or limit)
+    let start = 0;
+    const limit = parseInt(pagination.pageSize, 10) || 10; // Default limit
+    if (pagination.page) {
+      start = (parseInt(pagination.page, 10) - 1) * limit;
+    }
+  
+    // Fetch the redirects with filters, sort, and calculated start and limit
+    const redirects = await strapi.entityService.findMany('plugin::redirects.redirect', {
+      sort,
+      start,
+      limit,
+      filters,
     });
-
+  
+    // Calculate the total number of redirects matching the filters (without pagination limit)
+    const total = await strapi.entityService.count('plugin::redirects.redirect', { filters });
+  
     return {
-      redirects: results,
-      total: results.length
+      redirects,
+      total,
     };
   },
 
@@ -89,10 +109,8 @@ module.exports = ({ strapi }) => ({
    * @returns 
    */
   import: async ({ body }) => {
-    console.log('to be imported', body.data);
     const importResults = [];
     for (const row of body.data) {
-      console.log('row', row);
   
       // Skip processing for rows already marked as INVALID in the parsing phase
       if (row.status === 'INVALID') {
@@ -103,7 +121,6 @@ module.exports = ({ strapi }) => ({
       try {
         // Since the row passed initial CSV parsing validation, proceed with database-specific validation
         const validity = await validateRedirect({ data: row }, false);
-        console.log('row validity', validity);
   
         if (!validity.ok) {
           // If further validation fails (e.g., against database entries), mark as INVALID with detailed reasons
@@ -128,12 +145,11 @@ module.exports = ({ strapi }) => ({
           importResults.push({ ...operationResult, status: 'CREATED', details: { type: 'CREATED' } });
         }
       } catch (e) {
-        console.log('error during import operation', e);
+        console.error('error during import operation', e);
         importResults.push({ ...row, status: 'ERROR', error: e.message });
       }
     }
   
-    console.log('final importedResults', importResults);
     return importResults;
   }
 });
