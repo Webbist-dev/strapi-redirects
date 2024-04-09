@@ -1,21 +1,28 @@
-name: Node.js Package with Yarn
-
+name: Publish to npm
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
-  build-and-publish:
+  publish-npm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
         with:
-          node-version: '16'
-          cache: 'yarn'
-
-      - name: Publish to npm
-        run: yarn publish
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+      - name: Check release validity
+        run: sh .github/scripts/check-release.sh
+      - name: Check tag format
+        run: sh .github/scripts/check-tag-format.sh "${{ github.event.release.prerelease }}"
+      - name: Publish with latest tag
+        if: "!github.event.release.prerelease && !contains(github.ref, 'beta')"
+        run: npm publish .
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Publish with beta tag
+        if: "github.event.release.prerelease && contains(github.ref, 'beta')"
+        run: npm publish . --tag beta
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
