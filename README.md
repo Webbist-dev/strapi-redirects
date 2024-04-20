@@ -56,7 +56,7 @@ Example script for fetching redirects:
 
 ```javascript
 const redirects = () => {
-  return fetch('http://localhost:1337/redirects')
+  return fetch('http://localhost:1337/api/redirects')
     .then(res => res.json())
     .then(response => {
       // Use redirects however you need to
